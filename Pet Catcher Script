@@ -27,20 +27,13 @@ local Tabs = {
 }
 
 
-Tabs.Main:AddSection("Updates")
-Tabs.Main:AddSection("Teleport")
-Tabs.Farming:AddSection("Catching")
-Tabs.Bosses:AddSection("Bosses")
-Tabs.Minigames:AddSection("Minigames")
-Tabs.Hatching:AddSection("Hatching")
-Tabs.Extra:AddSection("Cube Drop")
-Tabs.Extra:AddSection("Auto Collect")
-Tabs.Extra:AddSection("Auto Buff")
-Tabs.Extra:AddSection("Ravanger Exchange")
-Tabs.Webhook:AddSection("Webhook URLS")
-Tabs.Credits:AddSection("Credits")
+--Tabs.Minigames:AddSection("Minigames") soon
+--Tabs.Webhook:AddSection("Webhook URLS") Soon
+--Tabs.Credits:AddSection("Credits") soon
 
 --Notify
+Tabs.Main:AddSection("Updates")
+
     Tabs.Main:AddParagraph({
         Title = "Updates",
         Content = "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup"
@@ -48,8 +41,8 @@ Tabs.Credits:AddSection("Credits")
 
 --button
 
-
-
+Tabs.Extra:AddSection("Cube Drop")
+ 
 local AutoCubeToggle = Tabs.Extra:AddToggle("Auto Cube", { Title = "Cube Drop / WORKS ONLY IN ARCADE", Default = false })
 AutoCubeToggle:OnChanged(function()
     if AutoCubeToggle.Value == true then
@@ -62,6 +55,8 @@ AutoCubeToggle:OnChanged(function()
         end)()
     end
 end)
+
+Tabs.Hatching:AddSection("Hatching")
 
 local Eggs = game:GetService("ReplicatedStorage").Assets.Eggs
 local List = {}
@@ -97,6 +92,8 @@ game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:In
     end
 end)
 
+Tabs.Extra:AddSection("Auto Collect")
+
 local Toggle = Tabs.Extra:AddToggle("AutoShrines", {Title = "Auto Shrines", Default = false })
 Toggle:OnChanged(function()
     if Fluent.Options.AutoShrines.Value == true then
@@ -122,7 +119,7 @@ end)
 
 
 
-
+Tabs.Bosses:AddSection("Bosses")
 
 
 local Bosses = game:GetService("ReplicatedStorage").Assets.Bosses
@@ -229,6 +226,7 @@ AutoBossRespawnToggle:OnChanged(function()
 end)
 
 
+Tabs.Farming:AddSection("Catching")
 
 local Dropdown = Tabs.Farming:AddDropdown("Auto Catch Menu", {
     Title = "Auto Potion Select",
@@ -286,6 +284,8 @@ print("Anti AFK activated.")
 })
 
 
+Tabs.Main:AddSection("Teleport")
+
 local selectedTeleport = "" -- Variable to store the selected teleport option
 
 -- Dropdown to select teleport destination
@@ -318,7 +318,7 @@ Tabs.Main:AddButton ({
     end
 })
 
-
+Tabs.Extra:AddSection("Auto Buff")
 
 
 local MultiDropdown = Tabs.Extra:AddDropdown("Thisisshit", {
@@ -352,7 +352,7 @@ end)
 
 
 
--- Add script
+Tabs.Extra:AddSection("Ravanger Exchange")
 
 -- Retrieve items from ReplicatedStorage
 local items = game:GetService("ReplicatedStorage").Assets.Items
@@ -400,7 +400,6 @@ RuneExchangeToggle:OnChanged(function(isEnabled)
         end
     end
 end)
-
 
 
 
