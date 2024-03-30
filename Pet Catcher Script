@@ -1,0 +1,444 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "    <Abby Hub>    " .. Fluent.Version,
+    SubTitle = "by Abby, xKq",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = true,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.K
+})
+
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "home" }),
+    Farming = Window:AddTab({ Title = "Farming", Icon = "coins" }),
+    Bosses = Window:AddTab({ Title = "Bosses", Icon = "skull" }),
+    Minigames = Window:AddTab({ Title = "Minigames", Icon = "gamepad" }),
+    Hatching = Window:AddTab({ Title = "Hatching", Icon = "egg" }),
+    Extra = Window:AddTab({ Title = "Extra", Icon = "plus" }),
+    Webhook = Window:AddTab({ Title = "Webhook", Icon = "link" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
+    Credits = Window:AddTab({ Title = "Credits", Icon = "users" }),
+}
+
+
+Tabs.Main:AddSection("Updates")
+
+
+--Notify
+    Tabs.Main:AddParagraph({
+        Title = "Updates",
+        Content = "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup"
+    })
+
+--button
+
+
+
+local AutoCubeToggle = Tabs.Extra:AddToggle("Auto Cube", { Title = "Cube Drop / WORKS ONLY IN ARCADE", Default = false })
+AutoCubeToggle:OnChanged(function()
+    if AutoCubeToggle.Value == true then
+        coroutine.wrap(function()
+            while AutoCubeToggle.Value == true do
+                local args = { [1] = "PlayCubeDrop" }
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
+                wait(0.6)
+            end
+        end)()
+    end
+end)
+
+local Eggs = game:GetService("ReplicatedStorage").Assets.Eggs
+local List = {}
+for _, v in pairs(Eggs:GetChildren()) do 
+    table.insert(List, v.Name)
+end
+
+local Dropdown = Tabs.Hatching:AddDropdown("SelectedEgg", {
+    Title = "Auto Egg",
+    Values = {"Mystery Egg", "Elite Mystery Egg", "Prismatic Egg"},
+    Multi = true,
+    Default = {}
+})
+
+Dropdown:OnChanged(function(selectedValue)
+    print("Selected egg:", selectedValue)
+    -- Add your logic here to handle the selected egg
+end)
+local Toggle = Tabs.Hatching:AddToggle("AutoEgg", {Title = "Auto Hatching", Default = false })
+Toggle:OnChanged(function()
+    if Fluent.Options.AutoEgg.Value == true then
+        coroutine.wrap(function()
+            while Fluent.Options.AutoEgg.Value == true and task.wait(1) do 
+                local Value = Fluent.Options.SelectedEgg.Value
+                local args = {
+    [1] = "TryHatchEgg",
+    [2] = Value
+}
+
+game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
+            end
+        end)()
+    end
+end)
+
+local Toggle = Tabs.Extra:AddToggle("AutoShrines", {Title = "Auto Shrines", Default = false })
+Toggle:OnChanged(function()
+    if Fluent.Options.AutoShrines.Value == true then
+        coroutine.wrap(function()
+            while Fluent.Options.AutoShrines.Value == true and task.wait(10) do 
+
+                for _, v in pairs(workspace:WaitForChild("Shrines"):GetChildren()) do 
+                    local args = {
+                        [1] = "UseShrine",
+                        [2] = v.Name
+                    }
+
+                    game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
+        task.wait(0.25)
+                end
+            end
+        end)()
+    end
+end)
+
+
+
+
+
+
+
+
+
+local Bosses = game:GetService("ReplicatedStorage").Assets.Bosses
+local List = {}
+for _, v in pairs(Bosses:GetChildren()) do 
+    table.insert(List, v.Name)
+end
+
+
+local previousPosition = nil
+
+
+local function restorePreviousPosition()
+    if previousPosition then
+        game.Players.LocalPlayer.Character:SetPrimaryPartCFrame(previousPosition)
+        previousPosition = nil
+    end
+end
+
+-- Create a dropdown for selecting the boss
+local Dropdown = Tabs.Bosses:AddDropdown("selectedBoss", {
+    Title = "Auto Bosses",
+    Values = {"King Slime", "Hyper Core", "Kraken"},
+    Multi = false,
+    Default = 1
+})
+
+Dropdown:OnChanged(function(selectedBoss)
+    
+    selectedBoss = selectedBoss:gsub(" ", "-")
+  
+    selectedBoss = selectedBoss:lower()
+    print("Selected Boss:", selectedBoss)
+    
+end)
+
+-- Create a numerical input for the boss level
+local BossLevelInput = Tabs.Bosses:AddInput("bossLevel", {
+    Title = "Boss Level",
+    Placeholder = "Enter boss level",
+    DefaultValue = "1",
+    Numeric = true,
+    Finished = true
+})
+
+local AutoBossToggle = Tabs.Bosses:AddToggle("AutoBosses", {Title = "Auto Bosses", Default = false })
+AutoBossToggle:OnChanged(function()
+    if AutoBossToggle.Value == true then
+        coroutine.wrap(function()
+            while AutoBossToggle.Value == true do 
+                local selectedBoss = Dropdown.Value
+                local bossLevel = tonumber(BossLevelInput.Value) or 1
+                
+               
+                previousPosition = game.Players.LocalPlayer.Character:GetPrimaryPartCFrame()
+                
+                
+                selectedBoss = selectedBoss:gsub(" ", "-")
+ 
+                selectedBoss = selectedBoss:lower()
+                
+                local args = {
+                    [1] = "BossRequest",
+                    [2] = selectedBoss,
+                    [3] = bossLevel
+                }
+
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
+                
+
+                wait(2)
+                
+
+                restorePreviousPosition()
+            end
+        end)()
+    end
+end)
+
+local AutoBossRespawnToggle = Tabs.Bosses:AddToggle("AutoBossesRespawn", {Title = "Auto Respawn Bosses", Default = false })
+AutoBossRespawnToggle:OnChanged(function()
+    if AutoBossRespawnToggle.Value == true then
+        coroutine.wrap(function()
+            while AutoBossRespawnToggle.Value == true do 
+                local selectedBoss = Dropdown.Value
+
+
+                selectedBoss = selectedBoss:gsub(" ", "-")
+
+                selectedBoss = selectedBoss:lower()
+                
+                local args = {
+                    [1] = "RespawnBoss",
+                    [2] = selectedBoss,
+                }
+
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
+                
+                -- Pause execution for a short time to allow other code to run
+                wait(0.1)
+            end
+        end)()
+    end
+end)
+
+
+
+local Dropdown = Tabs.Farming:AddDropdown("Auto Catch Menu", {
+    Title = "Auto Potion Select",
+    Description = "Select Pet to Catch",
+    Values = {"Common", "Rare", "Epic", "Legendary", "Secret"},
+    Multi = false,
+    Default = "Common" -- Set a default value
+})
+
+local AutoCatchToggle = Tabs.Farming:AddToggle("AutoCatch", {Title = "Auto Catch", Default = false })  
+AutoCatchToggle:OnChanged(function()
+    while AutoCatchToggle.Value do
+        local function getStars(pet)
+            local stars = 0
+            for _, v in pairs(pet:GetDescendants()) do
+                if v.Name == "Stars" then
+                    for _, b in pairs(v:GetChildren()) do
+                        if b:IsA("ImageLabel") and b.Visible == true then
+                            stars = stars + 1
+                        end
+                    end
+                end
+            end
+            return stars
+        end
+
+        local selectedRarity = Dropdown.Value
+        for _, v in pairs(workspace.Rendered.Pets.World:GetChildren()) do
+            if v:IsA("Model") then
+                local petRarity = v.Rarity -- Assuming Rarity is a valid property of the pet models
+                local petStars = getStars(v)
+                if petStars >= selectedStars and petRarity == selectedRarity then
+                    game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("Event"):FireServer("PetInteraction", v.Name)
+                    game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("Function"):InvokeServer("CapturePet", v.Name, selectedCube)
+                end
+            end
+        end
+        wait(0.1)
+    end
+end)
+
+
+    Tabs.Main:AddButton({
+        Title = "Anti AFK",
+        Description = "Press to set yourself in anti AFK",
+        Callback = function()
+print("Anti AFK activated.")
+        local vu = game:GetService("VirtualUser")
+        game:GetService("Players").LocalPlayer.Idled:Connect(function()
+            vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+            wait(1)
+            vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        end)
+    end
+})
+
+
+local selectedTeleport = "" -- Variable to store the selected teleport option
+
+-- Dropdown to select teleport destination
+local Dropdown = Tabs.Main:AddDropdown("selectedTeleport", {
+    Title = "Teleport to",
+    Values = {"Pet Park", "Mellow Meadows", "Auburn Woods", "Frosty Peaks", "Sunset Shores", "Dusty Dunes", "Gloomy Grotto", "Magma Basin", "Hyperwave Arcade"},
+    Multi = false,
+    Default = 1,
+    Callback = function(value)
+        selectedTeleport = value -- Update selectedTeleport when dropdown value changes
+    end
+})
+
+-- Button to teleport to the selected destination
+Tabs.Main:AddButton ({
+    Title = "Teleport",
+    Description = "Teleport you to selected location",
+    Callback = function()
+        if selectedTeleport ~= "" then -- Check if a location is selected
+            local args = {
+                [1] = "TeleportBeacon",
+                [2] = selectedTeleport, -- Use the selected teleport option
+                [3] = "Spawn"
+            }
+
+            game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
+        else
+            print("Please select a teleport destination.")
+        end
+    end
+})
+
+
+
+
+local MultiDropdown = Tabs.Extra:AddDropdown("Thisisshit", {
+    Title = "Buffs",
+    Description = "Select Buff",
+    Values = {"Coin Elixir", "Gamer Elixir", "Lucky Elixir", "Prismatic Elixir", "Sea Elixir", "Super Lucky Elixir", "Token Elixir", "XP Elixir"},
+    Multi = false,
+    Default = 1
+})
+
+MultiDropdown:OnChanged(function(selectedOption)
+    print("Selected Buff:", selectedOption)
+end)
+
+local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "Auto Buff", Default = false })
+AutoPowerupToggle:OnChanged(function(isEnabled)
+    if isEnabled then
+        coroutine.wrap(function()
+            while isEnabled do
+                local Value = MultiDropdown.Value
+                local args = { 
+                    [1] = "UsePowerup", 
+                    [2] = Value
+                }
+                game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("Event"):FireServer(unpack(args))
+                wait(300)
+            end
+        end)()
+    end
+end)
+
+-- Retrieve items from ReplicatedStorage
+local items = game:GetService("ReplicatedStorage").Assets.Items
+
+-- Create a list of item names
+local itemNames = {}
+for _, item in pairs(items:GetChildren()) do
+    table.insert(itemNames, item.Name)
+end
+
+-- Add script
+
+-- Retrieve items from ReplicatedStorage
+local items = game:GetService("ReplicatedStorage").Assets.Items
+
+-- Create a list of item names
+local itemNames = {}
+for _, item in pairs(items:GetChildren()) do
+    table.insert(itemNames, item.Name)
+end
+
+-- Add script
+local MultiDropdown = Tabs.Extra:AddDropdown("Exchange", {
+    Title = "Exchange",
+    Description = "Select which to Exchange",
+    Values = itemNames,  -- Use the list of item names
+    Multi = false,
+    Default = 1
+})
+
+MultiDropdown:OnChanged(function(selectedOption)
+    print("Selected Rune:", selectedOption)
+end)
+
+local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Buff", Default = false })
+local coroutineRunning = nil -- Variable to hold the coroutine
+
+RuneExchangeToggle:OnChanged(function(isEnabled)
+    if isEnabled then
+        coroutineRunning = coroutine.create(function()
+            while isEnabled do
+                local Value = MultiDropdown.Value
+                local args = { 
+                    [1] = "RuneExchange", 
+                    [2] = Value
+                }
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
+                wait(1)
+            end
+        end)
+        coroutine.resume(coroutineRunning) -- Start the coroutine
+    else
+        if coroutineRunning then
+            coroutine.kill(coroutineRunning) -- Stop the coroutine if it's running
+            coroutineRunning = nil
+        end
+    end
+end)
+
+
+
+
+
+
+-- Addons:
+-- SaveManager (Allows you to have a configuration system)
+-- InterfaceManager (Allows you to have a interface managment system)
+
+-- Hand the library over to our managers
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+
+-- Ignore keys that are used by ThemeManager.
+-- (we dont want configs to save themes, do we?)
+SaveManager:IgnoreThemeSettings()
+
+-- You can add indexes of elements the save manager should ignore
+SaveManager:SetIgnoreIndexes({})
+
+-- use case for doing it this way:
+-- a script hub could have themes in a global folder
+-- and game configs in a separate folder per game
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/specific-game")
+
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+
+--Auto Collect Para
+Window:SelectTab(1)
+Fluent:Notify({
+    Title = "Abby Hub Pet Catchers",
+    Content = "[⚙️] The script has been loaded.",
+    Duration = 8
+})
+
+-- You can use the SaveManager:LoadAutoloadConfig() to load a config
+-- which has been marked to be one that auto loads!
+SaveManager:LoadAutoloadConfig()
