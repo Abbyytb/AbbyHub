@@ -1,6 +1,3 @@
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
@@ -343,14 +340,7 @@ AutoPowerupToggle:OnChanged(function(isEnabled)
     end
 end)
 
--- Retrieve items from ReplicatedStorage
-local items = game:GetService("ReplicatedStorage").Assets.Items
 
--- Create a list of item names
-local itemNames = {}
-for _, item in pairs(items:GetChildren()) do
-    table.insert(itemNames, item.Name)
-end
 
 -- Add script
 
