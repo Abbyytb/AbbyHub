@@ -28,7 +28,17 @@ local Tabs = {
 
 
 Tabs.Main:AddSection("Updates")
-
+Tabs.Main:AddSection("Teleport")
+Tabs.Farming:AddSection("Catching")
+Tabs.Bosses:AddSection("Bosses")
+Tabs.Minigames:AddSection("Minigames")
+Tabs.Hatching:AddSection("Hatching")
+Tabs.Extra:AddSection("Cube Drop")
+Tabs.Extra:AddSection("Auto Collect")
+Tabs.Extra:AddSection("Auto Buff")
+Tabs.Extra:AddSection("Ravanger Exchange")
+Tabs.Webhook:AddSection("Webhook URLS")
+Tabs.Credits:AddSection("Credits")
 
 --Notify
     Tabs.Main:AddParagraph({
@@ -366,7 +376,7 @@ MultiDropdown:OnChanged(function(selectedOption)
     print("Selected Rune:", selectedOption)
 end)
 
-local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Buff", Default = false })
+local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Ravanger Exchange", Default = false })
 local coroutineRunning = nil -- Variable to hold the coroutine
 
 RuneExchangeToggle:OnChanged(function(isEnabled)
