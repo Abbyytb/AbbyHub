@@ -321,7 +321,7 @@ Tabs.Main:AddButton ({
 Tabs.Extra:AddSection("Auto Buff")
 
 
-local MultiDropdown = Tabs.Extra:AddDropdown("Thisisshit", {
+local MultiDropdown = Tabs.Extra:AddDropdown("selectedBuff", {
     Title = "Buffs",
     Description = "Select Buff",
     Values = {"Coin Elixir", "Gamer Elixir", "Lucky Elixir", "Prismatic Elixir", "Sea Elixir", "Super Lucky Elixir", "Token Elixir", "XP Elixir"},
@@ -333,8 +333,8 @@ MultiDropdown:OnChanged(function(selectedOption)
     print("Selected Buff:", selectedOption)
 end)
 
-local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "Auto Buff", Default = false })
-AutoPowerupToggle:OnChanged(function(isEnabled)
+local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "AutoBuff", Default = false })
+AutoBuffToggle:OnChanged(function(isEnabled)
     if isEnabled then
         coroutine.wrap(function()
             while isEnabled do
