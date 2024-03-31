@@ -141,7 +141,7 @@ end
 -- Create a dropdown for selecting the boss
 local Dropdown = Tabs.Bosses:AddDropdown("selectedBoss", {
     Title = "Auto Bosses",
-    Values = {"King Slime", "Hyper Core", "Kraken"},
+    Values = {"King Slime", "Hyper Core", "The Kraken"},
     Multi = false,
     Default = 1
 })
