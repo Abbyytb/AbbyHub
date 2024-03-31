@@ -27,9 +27,7 @@ local Tabs = {
 }
 
 
---Tabs.Minigames:AddSection("Minigames") soon
---Tabs.Webhook:AddSection("Webhook URLS") Soon
---Tabs.Credits:AddSection("Credits") soon
+
 
 --Notify
 Tabs.Main:AddSection("Updates")
