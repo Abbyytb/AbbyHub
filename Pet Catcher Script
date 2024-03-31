@@ -38,6 +38,41 @@ Tabs.Main:AddSection("Updates")
         Content = "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup"
     })
 
+
+
+-- Assuming this code is within a LocalScript
+
+-- Accessing player service and local player
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Getting leaderstats
+local leaderstats = player:WaitForChild("leaderstats")
+
+-- Accessing the Stats paragraph
+local paragraph = Tabs.Main:GetParagraph("Statts")
+
+-- Checking if paragraph exists
+if paragraph then
+    -- Clearing existing content
+    paragraph:Clear()
+
+    -- Adding leaderstats content to paragraph
+    for statName, statValue in pairs(leaderstats:GetChildren()) do
+        -- Adding each stat to the paragraph content
+        paragraph:AddContent(statName .. ": " .. statValue.Value)
+    end
+else
+    warn("Paragraph 'Statts' not found!")
+end
+
+
+
+
+
+
+
+
 --button
 
 Tabs.Extra:AddSection("Auto Cube")
