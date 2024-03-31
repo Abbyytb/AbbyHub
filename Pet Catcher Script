@@ -1,3 +1,6 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
 local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
@@ -27,11 +30,9 @@ local Tabs = {
 }
 
 
-
-
---Notify
 Tabs.Main:AddSection("Updates")
 
+--Notify
     Tabs.Main:AddParagraph({
         Title = "Updates",
         Content = "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup"
@@ -39,8 +40,8 @@ Tabs.Main:AddSection("Updates")
 
 --button
 
-Tabs.Extra:AddSection("Cube Drop")
- 
+Tabs.Extra:AddSection("Auto Cube")
+
 local AutoCubeToggle = Tabs.Extra:AddToggle("Auto Cube", { Title = "Cube Drop / WORKS ONLY IN ARCADE", Default = false })
 AutoCubeToggle:OnChanged(function()
     if AutoCubeToggle.Value == true then
@@ -117,8 +118,8 @@ end)
 
 
 
-Tabs.Bosses:AddSection("Bosses")
 
+Tabs.Bosses:AddSection("Bosses")
 
 local Bosses = game:GetService("ReplicatedStorage").Assets.Bosses
 local List = {}
@@ -140,7 +141,7 @@ end
 -- Create a dropdown for selecting the boss
 local Dropdown = Tabs.Bosses:AddDropdown("selectedBoss", {
     Title = "Auto Bosses",
-    Values = {"King Slime", "Hyper Core", "The Kraken"},
+    Values = {"King Slime", "Hyper Core", "Kraken"},
     Multi = false,
     Default = 1
 })
@@ -222,6 +223,7 @@ AutoBossRespawnToggle:OnChanged(function()
         end)()
     end
 end)
+
 
 
 Tabs.Farming:AddSection("Catching")
@@ -316,10 +318,11 @@ Tabs.Main:AddButton ({
     end
 })
 
-Tabs.Extra:AddSection("Auto Buff")
 
 
-local MultiDropdown = Tabs.Extra:AddDropdown("selectedBuff", {
+Tabs.Extra:AddSection("Buffs")
+
+local MultiDropdown = Tabs.Extra:AddDropdown("Thisisshit", {
     Title = "Buffs",
     Description = "Select Buff",
     Values = {"Coin Elixir", "Gamer Elixir", "Lucky Elixir", "Prismatic Elixir", "Sea Elixir", "Super Lucky Elixir", "Token Elixir", "XP Elixir"},
@@ -331,8 +334,8 @@ MultiDropdown:OnChanged(function(selectedOption)
     print("Selected Buff:", selectedOption)
 end)
 
-local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "AutoBuff", Default = false })
-AutoBuffToggle:OnChanged(function(isEnabled)
+local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "Auto Buff", Default = false })
+AutoPowerupToggle:OnChanged(function(isEnabled)
     if isEnabled then
         coroutine.wrap(function()
             while isEnabled do
@@ -350,7 +353,9 @@ end)
 
 
 
-Tabs.Extra:AddSection("Ravanger Exchange")
+
+
+
 
 -- Retrieve items from ReplicatedStorage
 local items = game:GetService("ReplicatedStorage").Assets.Items
@@ -362,6 +367,18 @@ for _, item in pairs(items:GetChildren()) do
 end
 
 -- Add script
+
+-- Retrieve items from ReplicatedStorage
+local items = game:GetService("ReplicatedStorage").Assets.Items
+
+-- Create a list of item names
+local itemNames = {}
+for _, item in pairs(items:GetChildren()) do
+    table.insert(itemNames, item.Name)
+end
+
+Tabs.Extra:AddSection("Ravanger Exchange")
+
 local MultiDropdown = Tabs.Extra:AddDropdown("Exchange", {
     Title = "Exchange",
     Description = "Select which to Exchange",
@@ -374,7 +391,7 @@ MultiDropdown:OnChanged(function(selectedOption)
     print("Selected Rune:", selectedOption)
 end)
 
-local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Ravanger Exchange", Default = false })
+local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Buff", Default = false })
 local coroutineRunning = nil -- Variable to hold the coroutine
 
 RuneExchangeToggle:OnChanged(function(isEnabled)
