@@ -2,9 +2,9 @@ local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/
 local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
 local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
 
-local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
-local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
-local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+local StartCastFishing = game:GetService("ReplicatedStorage").RemoteEvents.StartCastFishing
+local StopFishing = game:GetService("ReplicatedStorage").RemoteEvents.StopFishing
+local Toggle = false
 
 local Window = Fluent:CreateWindow({
     Title = "    <Abby Hub>    " .. Fluent.Version,
@@ -15,7 +15,6 @@ local Window = Fluent:CreateWindow({
     Theme = "Dark",
     MinimizeKey = Enum.KeyCode.K
 })
-
 
 local Tabs = {
     Main = Window:AddTab({ Title = "Main", Icon = "home" }),
@@ -30,53 +29,24 @@ local Tabs = {
 }
 
 
-Tabs.Main:AddSection("Updates")
 
---Notify
-    Tabs.Main:AddParagraph({
-        Title = "Updates",
-        Content = "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup"
+local function AddCenteredBorderedParagraph(tab, title, content)
+    local paragraph = tab:AddParagraph({
+        Title = title,
+        Content = content,
+        TextAlign = "Center",
+        Bordered = true,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(0.8, 0, 0, 100),
+        Block = true
     })
-
-
-
--- Assuming this code is within a LocalScript
-
--- Accessing player service and local player
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-
--- Getting leaderstats
-local leaderstats = player:WaitForChild("leaderstats")
-
--- Accessing the Stats paragraph
-local paragraph = Tabs.Main:GetParagraph("Statts")
-
--- Checking if paragraph exists
-if paragraph then
-    -- Clearing existing content
-    paragraph:Clear()
-
-    -- Adding leaderstats content to paragraph
-    for statName, statValue in pairs(leaderstats:GetChildren()) do
-        -- Adding each stat to the paragraph content
-        paragraph:AddContent(statName .. ": " .. statValue.Value)
-    end
-else
-    warn("Paragraph 'Statts' not found!")
+    return paragraph
 end
 
+local updatesParagraph = AddCenteredBorderedParagraph(Tabs.Main, "Updates", "All Updates\n[+] Bosses \n[+] Auto CubeDrop \n[+] Auto Shrines (wait 10 Seconds to Apply) \n[+] Added Hatching \n[+] Auto Elixir/Powerup")
 
 
-
-
-
-
-
---button
-
-Tabs.Extra:AddSection("Auto Cube")
-
+-- Add Auto Cube toggle
 local AutoCubeToggle = Tabs.Extra:AddToggle("Auto Cube", { Title = "Cube Drop / WORKS ONLY IN ARCADE", Default = false })
 AutoCubeToggle:OnChanged(function()
     if AutoCubeToggle.Value == true then
@@ -90,24 +60,17 @@ AutoCubeToggle:OnChanged(function()
     end
 end)
 
-Tabs.Hatching:AddSection("Hatching")
-
+-- Add auto hatching
 local Eggs = game:GetService("ReplicatedStorage").Assets.Eggs
-local List = {}
-for _, v in pairs(Eggs:GetChildren()) do 
-    table.insert(List, v.Name)
-end
-
 local Dropdown = Tabs.Hatching:AddDropdown("SelectedEgg", {
     Title = "Auto Egg",
     Values = {"Mystery Egg", "Elite Mystery Egg", "Prismatic Egg"},
     Multi = true,
     Default = {}
 })
-
 Dropdown:OnChanged(function(selectedValue)
     print("Selected egg:", selectedValue)
-    -- Add your logic here to handle the selected egg
+    -- Add logic here to handle the selected egg
 end)
 local Toggle = Tabs.Hatching:AddToggle("AutoEgg", {Title = "Auto Hatching", Default = false })
 Toggle:OnChanged(function()
@@ -116,32 +79,28 @@ Toggle:OnChanged(function()
             while Fluent.Options.AutoEgg.Value == true and task.wait(1) do 
                 local Value = Fluent.Options.SelectedEgg.Value
                 local args = {
-    [1] = "TryHatchEgg",
-    [2] = Value
-}
-
-game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
+                    [1] = "TryHatchEgg",
+                    [2] = Value
+                }
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
             end
         end)()
     end
 end)
 
-Tabs.Extra:AddSection("Auto Collect")
-
+-- Add auto shrines
 local Toggle = Tabs.Extra:AddToggle("AutoShrines", {Title = "Auto Shrines", Default = false })
 Toggle:OnChanged(function()
     if Fluent.Options.AutoShrines.Value == true then
         coroutine.wrap(function()
-            while Fluent.Options.AutoShrines.Value == true and task.wait(10) do 
-
+            while Fluent.Options.AutoShrines.Value == true and task.wait(5) do 
                 for _, v in pairs(workspace:WaitForChild("Shrines"):GetChildren()) do 
                     local args = {
                         [1] = "UseShrine",
                         [2] = v.Name
                     }
-
                     game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
-        task.wait(0.25)
+                    task.wait(0.25)
                 end
             end
         end)()
@@ -150,11 +109,55 @@ end)
 
 
 
+local function ActivateSelectedBuffs(buffs)
+    for _, buff in ipairs(buffs) do
+        local args = {
+            [1] = "UsePowerup",
+            [2] = buff
+        }
+        local success, error_message = pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("Event"):FireServer(unpack(args))
+        end)
+        if not success then
+            warn("Error while triggering powerup:", error_message)
+        end
+    end
+end
+
+local function AutoActivateBuffs(selectedBuffs)
+    while true do
+        ActivateSelectedBuffs(selectedBuffs)
+        wait(300) -- Wait for 5 minutes before triggering again
+    end
+end
+
+local Dropdown = Tabs.Extra:AddDropdown("SelectedBuffs", {
+    Title = "Select Buffs",
+    Description = "Choose buffs to activate",
+    Values = {"Coin Elixir", "Gamer Elixir", "Lucky Elixir", "Prismatic Elixir", "Sea Elixir", "Super Lucky Elixir", "Token Elixir", "XP Elixir"},
+    Multi = true,
+    Default = {}
+})
+
+local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoPowerups", { Title = "Auto Powerup", Default = false })
+local isAutoPowerupEnabled = false
+
+AutoPowerupToggle:OnChanged(function(isEnabled)
+    isAutoPowerupEnabled = isEnabled
+    if isEnabled then
+        coroutine.wrap(function()
+            local selectedBuffs = Dropdown.Value
+            while isAutoPowerupEnabled do
+                ActivateSelectedBuffs(selectedBuffs)
+                wait(300) -- Wait for 5 minutes before triggering again
+            end
+        end)()
+    end
+end)
 
 
 
 
-Tabs.Bosses:AddSection("Bosses")
 
 local Bosses = game:GetService("ReplicatedStorage").Assets.Bosses
 local List = {}
@@ -162,9 +165,7 @@ for _, v in pairs(Bosses:GetChildren()) do
     table.insert(List, v.Name)
 end
 
-
 local previousPosition = nil
-
 
 local function restorePreviousPosition()
     if previousPosition then
@@ -173,95 +174,68 @@ local function restorePreviousPosition()
     end
 end
 
--- Create a dropdown for selecting the boss
-local Dropdown = Tabs.Bosses:AddDropdown("selectedBoss", {
-    Title = "Auto Bosses",
-    Values = {"King Slime", "Hyper Core", "The Kraken"},
-    Multi = false,
-    Default = 1
-})
+local BossLevelInputs = {} -- Store input fields for each boss level
 
-Dropdown:OnChanged(function(selectedBoss)
-    
+-- Function to update selected boss and print it
+local function UpdateSelectedBoss(selectedBoss)
     selectedBoss = selectedBoss:gsub(" ", "-")
-  
     selectedBoss = selectedBoss:lower()
     print("Selected Boss:", selectedBoss)
-    
-end)
+end
 
--- Create a numerical input for the boss level
-local BossLevelInput = Tabs.Bosses:AddInput("bossLevel", {
-    Title = "Boss Level",
-    Placeholder = "Enter boss level",
-    DefaultValue = "1",
-    Numeric = true,
-    Finished = true
+-- Dropdown to select boss
+local Dropdown = Tabs.Bosses:AddDropdown("selectedBoss", {
+    Title = "Auto Bosses",
+    Values = List,
+    Multi = false,
+    Default = 1,
+    Callback = UpdateSelectedBoss
 })
 
-local AutoBossToggle = Tabs.Bosses:AddToggle("AutoBosses", {Title = "Auto Bosses", Default = false })
-AutoBossToggle:OnChanged(function()
-    if AutoBossToggle.Value == true then
-        coroutine.wrap(function()
-            while AutoBossToggle.Value == true do 
-                local selectedBoss = Dropdown.Value
-                local bossLevel = tonumber(BossLevelInput.Value) or 1
-                
-               
-                previousPosition = game.Players.LocalPlayer.Character:GetPrimaryPartCFrame()
-                
-                
-                selectedBoss = selectedBoss:gsub(" ", "-")
- 
-                selectedBoss = selectedBoss:lower()
-                
-                local args = {
-                    [1] = "BossRequest",
-                    [2] = selectedBoss,
-                    [3] = bossLevel
-                }
+-- Add input fields for boss levels
+for _, bossName in ipairs(List) do
+    local input = Tabs.Bosses:AddInput("bossLevel_" .. bossName, {
+        Title = bossName .. " Level",
+        Placeholder = "Enter boss level",
+        DefaultValue = "1",
+        Numeric = true,
+        Finished = true
+    })
+    BossLevelInputs[bossName] = input
+end
 
-                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Function:InvokeServer(unpack(args))
-                
-
-                wait(2)
-                
-
-                restorePreviousPosition()
-            end
-        end)()
-    end
-end)
-
+-- Toggle to auto respawn bosses
 local AutoBossRespawnToggle = Tabs.Bosses:AddToggle("AutoBossesRespawn", {Title = "Auto Respawn Bosses", Default = false })
 AutoBossRespawnToggle:OnChanged(function()
     if AutoBossRespawnToggle.Value == true then
         coroutine.wrap(function()
             while AutoBossRespawnToggle.Value == true do 
                 local selectedBoss = Dropdown.Value
-
-
+                local bossLevelInput = BossLevelInputs[selectedBoss]
+                local bossLevel = tonumber(bossLevelInput.Value) or 1
+                
+                previousPosition = game.Players.LocalPlayer.Character:GetPrimaryPartCFrame()
+                
                 selectedBoss = selectedBoss:gsub(" ", "-")
-
                 selectedBoss = selectedBoss:lower()
                 
                 local args = {
                     [1] = "RespawnBoss",
                     [2] = selectedBoss,
+                    [3] = bossLevel
                 }
 
                 game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
                 
-                -- Pause execution for a short time to allow other code to run
                 wait(0.1)
+                
+                restorePreviousPosition()
             end
         end)()
     end
 end)
 
 
-
-Tabs.Farming:AddSection("Catching")
 
 local Dropdown = Tabs.Farming:AddDropdown("Auto Catch Menu", {
     Title = "Auto Potion Select",
@@ -304,150 +278,96 @@ AutoCatchToggle:OnChanged(function()
 end)
 
 
-    Tabs.Main:AddButton({
-        Title = "Anti AFK",
-        Description = "Press to set yourself in anti AFK",
-        Callback = function()
-print("Anti AFK activated.")
-        local vu = game:GetService("VirtualUser")
-        game:GetService("Players").LocalPlayer.Idled:Connect(function()
-            vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-            wait(1)
-            vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
-        end)
-    end
+
+
+
+Tabs.Main:AddButton({
+    Title = "Anti AFK",
+    Description = "Press to set yourself in anti AFK",
+local function AntiAFK()
+    print("Anti AFK activated.")
+    local vu = game:GetService("VirtualUser")
+    game:GetService("Players").LocalPlayer.Idled:Connect(function()
+        vu:Button2Down(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+        wait(1)
+        vu:Button2Up(Vector2.new(0,0),workspace.CurrentCamera.CFrame)
+    end)
+end
 })
 
+-- Call the Anti AFK function
+AntiAFK()
 
-Tabs.Main:AddSection("Teleport")
 
-local selectedTeleport = "" -- Variable to store the selected teleport option
+-- Remove the existing dropdown
+Tabs.Main:RemoveDropdown("selectedTeleport")
 
--- Dropdown to select teleport destination
-local Dropdown = Tabs.Main:AddDropdown("selectedTeleport", {
+-- Add a new dropdown with teleport functionality
+local TeleportDropdown = Tabs.Main:AddDropdown("selectedTeleport", {
     Title = "Teleport to",
     Values = {"Pet Park", "Mellow Meadows", "Auburn Woods", "Frosty Peaks", "Sunset Shores", "Dusty Dunes", "Gloomy Grotto", "Magma Basin", "Hyperwave Arcade"},
     Multi = false,
     Default = 1,
     Callback = function(value)
-        selectedTeleport = value -- Update selectedTeleport when dropdown value changes
-    end
-})
-
--- Button to teleport to the selected destination
-Tabs.Main:AddButton ({
-    Title = "Teleport",
-    Description = "Teleport you to selected location",
-    Callback = function()
-        if selectedTeleport ~= "" then -- Check if a location is selected
-            local args = {
-                [1] = "TeleportBeacon",
-                [2] = selectedTeleport, -- Use the selected teleport option
-                [3] = "Spawn"
-            }
-
-            game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
-        else
-            print("Please select a teleport destination.")
-        end
+        local args = {
+            [1] = "TeleportBeacon",
+            [2] = value, -- Use the selected teleport option
+            [3] = "Spawn"
+        }
+    
+        game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
     end
 })
 
 
 
-Tabs.Extra:AddSection("Buffs")
 
-local MultiDropdown = Tabs.Extra:AddDropdown("Thisisshit", {
-    Title = "Buffs",
-    Description = "Select Buff",
-    Values = {"Coin Elixir", "Gamer Elixir", "Lucky Elixir", "Prismatic Elixir", "Sea Elixir", "Super Lucky Elixir", "Token Elixir", "XP Elixir"},
+
+local Toggle = false -- Initialize Toggle variable outside functions
+local FishingLocation = "Pet Park" -- Default fishing location
+
+-- Dropdown menu for selecting fishing location
+local FishingLocationDropdown = Tabs.Main:AddDropdown("FishingLocation", {
+    Title = "Select Fishing Location",
+    Values = {"Pet Park", "Mellow Meadows", "Auburn Woods", "Frosty Peaks", "Sunset Shores", "Dusty Dunes", "Gloomy Grotto", "Magma Basin", "Hyperwave Arcade"},
     Multi = false,
-    Default = 1
+    Default = FishingLocation,
+    Callback = function(value)
+        FishingLocation = value -- Update fishing location when dropdown value changes
+    end
 })
 
-MultiDropdown:OnChanged(function(selectedOption)
-    print("Selected Buff:", selectedOption)
-end)
-
-local AutoPowerupToggle = Tabs.Extra:AddToggle("AutoBuff", { Title = "Auto Buff", Default = false })
-AutoPowerupToggle:OnChanged(function(isEnabled)
-    if isEnabled then
-        coroutine.wrap(function()
-            while isEnabled do
-                local Value = MultiDropdown.Value
-                local args = { 
-                    [1] = "UsePowerup", 
-                    [2] = Value
-                }
-                game:GetService("ReplicatedStorage"):WaitForChild("Shared"):WaitForChild("Framework"):WaitForChild("Network"):WaitForChild("Remote"):WaitForChild("Event"):FireServer(unpack(args))
-                wait(300)
-            end
-        end)()
+-- Function to start fishing
+local function StartFishing()
+    while Toggle do
+        -- Start casting fishing at the selected location
+        StartCastFishing:FireServer(FishingLocation)
+        wait(3.5) -- Wait for 3.5 seconds for fishing
     end
-end)
-
-
-
-
-
-
-
--- Retrieve items from ReplicatedStorage
-local items = game:GetService("ReplicatedStorage").Assets.Items
-
--- Create a list of item names
-local itemNames = {}
-for _, item in pairs(items:GetChildren()) do
-    table.insert(itemNames, item.Name)
 end
 
--- Add script
-
--- Retrieve items from ReplicatedStorage
-local items = game:GetService("ReplicatedStorage").Assets.Items
-
--- Create a list of item names
-local itemNames = {}
-for _, item in pairs(items:GetChildren()) do
-    table.insert(itemNames, item.Name)
+-- Function to toggle auto fishing
+local function ToggleAutoFishing()
+    Toggle = not Toggle
+    if Toggle then
+        StartFishing() -- Start auto fishing
+    end
 end
 
-Tabs.Extra:AddSection("Ravanger Exchange")
-
-local MultiDropdown = Tabs.Extra:AddDropdown("Exchange", {
-    Title = "Exchange",
-    Description = "Select which to Exchange",
-    Values = itemNames,  -- Use the list of item names
-    Multi = false,
-    Default = 1
-})
-
-MultiDropdown:OnChanged(function(selectedOption)
-    print("Selected Rune:", selectedOption)
-end)
-
-local RuneExchangeToggle = Tabs.Extra:AddToggle("RuneExchange", { Title = "Auto Buff", Default = false })
-local coroutineRunning = nil -- Variable to hold the coroutine
-
-RuneExchangeToggle:OnChanged(function(isEnabled)
-    if isEnabled then
-        coroutineRunning = coroutine.create(function()
-            while isEnabled do
-                local Value = MultiDropdown.Value
-                local args = { 
-                    [1] = "RuneExchange", 
-                    [2] = Value
-                }
-                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer(unpack(args))
-                wait(1)
-            end
-        end)
-        coroutine.resume(coroutineRunning) -- Start the coroutine
+-- Toggle function
+local function ToggleFishing()
+    if Toggle then
+        Toggle = false -- Turn off auto fishing
     else
-        if coroutineRunning then
-            coroutine.kill(coroutineRunning) -- Stop the coroutine if it's running
-            coroutineRunning = nil
-        end
+        ToggleAutoFishing() -- Turn on auto fishing
+    end
+end
+
+-- Connect toggle to a UI button or key press
+-- Example:
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.E then -- Change the key to your preference
+        ToggleFishing()
     end
 end)
 
@@ -455,9 +375,52 @@ end)
 
 
 
--- Addons:
--- SaveManager (Allows you to have a configuration system)
--- InterfaceManager (Allows you to have a interface managment system)
+-- Define multi dropdown menu for currencies to use
+local CurrenciesToUseDropdown = Tabs.Extra:AddDropdown("CurrenciesToUse", {
+    Title = "Select Currencies to Use",
+    Values = {"Coins", "Tokens", "Items", "Gems"}, -- Placeholder values
+    Multi = true,
+    Default = {} -- Set default to an empty table
+})
+
+-- Define toggle for auto buying from merchants
+local AutoBuyToggle = Tabs.Extra:AddToggle("AutoBuy", { Title = "Auto Buy", Default = false })
+
+-- Define multi dropdown menu for items in merchant
+local ItemsDropdown = Tabs.Extra:AddDropdown("ItemsToBuy", {
+    Title = "Select Items to Buy",
+    Values = {"Item1", "Item2", "Item3"}, -- Placeholder values
+    Multi = true,
+    Default = {} -- Set default to an empty table
+})
+
+-- Function to buy items from the selected merchants
+local function BuyItems()
+    while AutoBuyToggle.Value do
+        local selectedMerchants = MerchantsDropdown.Value
+        local selectedCurrencies = CurrenciesToUseDropdown.Value -- Use the specific currencies dropdown
+        local selectedItems = ItemsDropdown.Value
+
+        -- Iterate over selected merchants
+        for _, merchant in pairs(selectedMerchants) do
+            -- Iterate over selected currencies
+            for _, currency in pairs(selectedCurrencies) do
+                -- Iterate over selected items
+                for _, item in pairs(selectedItems) do
+                    -- Add logic to buy the item using the selected currency from the current merchant
+                    print("Buying", item, "from", merchant, "using", currency)
+                end
+            end
+        end
+        wait(1) -- Adjust the wait time as needed
+    end
+end
+
+-- Connect auto buy toggle to buy function
+AutoBuyToggle:OnChanged(BuyItems)
+
+
+
 
 -- Hand the library over to our managers
 SaveManager:SetLibrary(Fluent)
@@ -479,8 +442,7 @@ SaveManager:SetFolder("FluentScriptHub/specific-game")
 InterfaceManager:BuildInterfaceSection(Tabs.Settings)
 SaveManager:BuildConfigSection(Tabs.Settings)
 
-
---Auto Collect Para
+-- Auto Collect Para
 Window:SelectTab(1)
 Fluent:Notify({
     Title = "Abby Hub Pet Catchers",
